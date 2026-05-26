@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -26,7 +27,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -341,7 +344,6 @@ fun AdminScreen(
                     .padding(paddingValues)
                     .padding(16.dp)
             ) {
-                // 统计卡片
                 if (!isLoading && records.isNotEmpty()) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -366,15 +368,37 @@ fun AdminScreen(
                                 )
                             }
 
-                            Divider()
+                            HorizontalDivider(
+                                Modifier,
+                                DividerDefaults.Thickness,
+                                DividerDefaults.color
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.End
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Button(
+                                    onClick = onNavigateToUserList,
+                                    modifier = Modifier.weight(1f),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.People,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text("所有成员")
+                                }
+
+                                Button(
                                     onClick = onNavigateToInactiveUsers,
+                                    modifier = Modifier.weight(1f),
                                     colors = ButtonDefaults.buttonColors(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
                                         contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -391,10 +415,9 @@ fun AdminScreen(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
 
-                // 错误提示
                 if (errorMessage != null) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -411,7 +434,6 @@ fun AdminScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // 首次加载中
                 if (isLoading && records.isEmpty()) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -421,7 +443,6 @@ fun AdminScreen(
                     }
                 }
 
-                // 打卡记录列表
                 if (!isLoading && records.isNotEmpty()) {
                     Text(
                         text = "最新打卡记录",
@@ -439,7 +460,6 @@ fun AdminScreen(
                     }
                 }
 
-                // 无数据
                 if (!isLoading && records.isEmpty() && errorMessage == null) {
                     Box(
                         modifier = Modifier.fillMaxSize(),

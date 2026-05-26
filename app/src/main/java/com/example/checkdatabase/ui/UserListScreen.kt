@@ -1,5 +1,7 @@
 package com.example.checkdatabase.ui
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,8 +11,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Message
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -21,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +40,9 @@ fun UserListScreen(
     onNavigateToUserDetail: (String) -> Unit,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+
     val allUserStats = remember(records) {
         records.groupBy { it.userName }
             .map { (name, userRecords) ->
@@ -51,6 +59,7 @@ fun UserListScreen(
             }
             .sortedByDescending { it.totalCheckins }
     }
+
     val filteredUserStats = remember(allUserStats, searchQuery) {
         if (searchQuery.isBlank()) {
             allUserStats
@@ -61,20 +70,6 @@ fun UserListScreen(
             }
         }
     }
-    val userStats = records.groupBy { it.userName }
-        .map { (name, userRecords) ->
-            val latest = userRecords.maxByOrNull { it.checkinTime }
-            UserStats(
-                name = name,
-                phoneNumber = latest?.phoneNumber ?: "",
-                age = latest?.age ?: 0,
-                gender = latest?.gender ?: "",
-                totalCheckins = userRecords.size,
-                lastCheckinTime = latest?.checkinTime ?: "",
-                lastCheckinLocation = latest?.city ?: ""
-            )
-        }
-        .sortedByDescending { it.totalCheckins }
 
     Scaffold(
         topBar = {
@@ -162,7 +157,7 @@ fun UserListScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(filteredUserStats) { user ->  // ✅ 使用 filteredUserStats
+                    items(filteredUserStats) { user ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -192,6 +187,41 @@ fun UserListScreen(
                                         color = MaterialTheme.colorScheme.outline
                                     )
                                 }
+
+                                IconButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_DIAL).apply {
+                                            data = Uri.parse("tel:${user.phoneNumber}")
+                                        }
+                                        context.startActivity(intent)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Phone,
+                                        contentDescription = "拨打电话",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+
+                                // ✅ 短信按钮
+                                IconButton(
+                                    onClick = {
+                                        val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                            data = Uri.parse("smsto:${user.phoneNumber}")
+                                        }
+                                        context.startActivity(intent)
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.Message,
+                                        contentDescription = "发送短信",
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+
+                                // 详情箭头
                                 Icon(
                                     imageVector = Icons.Default.ChevronRight,
                                     contentDescription = "详情"
