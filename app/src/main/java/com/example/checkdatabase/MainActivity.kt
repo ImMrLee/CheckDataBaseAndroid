@@ -231,6 +231,7 @@ class DatabaseHelper {
             callback(result)
         }
     }
+
     fun getInactiveUsers(days: Int = 1, callback: (List<InactiveUser>) -> Unit) {
         InactiveUserTask(callback, days).execute()
     }
@@ -256,16 +257,16 @@ class DatabaseHelper {
                 Class.forName("com.mysql.jdbc.Driver")
                 connection = DriverManager.getConnection(URL, USER, PASSWORD)
 
-                // 查询每个用户的最后一次打卡时间
                 val sql = """
                 SELECT 
                     user_name, 
                     phone_number, 
                     MAX(checkin_time) as last_checkin_time,
-                    SUBSTRING_INDEX(GROUP_CONCAT(city ORDER BY checkin_time DESC), ',', 1) as last_city
+                    SUBSTRING_INDEX(GROUP_CONCAT(city ORDER BY checkin_time DESC), ',', 1) as last_city,
+                    DATEDIFF(CURDATE(), DATE(MAX(checkin_time))) as inactive_days
                 FROM checkin_records 
                 GROUP BY user_name, phone_number
-                HAVING last_checkin_time < DATE_SUB(NOW(), INTERVAL $days DAY)
+                HAVING last_checkin_time < CURDATE()
                 ORDER BY last_checkin_time ASC
             """.trimIndent()
 
@@ -273,18 +274,18 @@ class DatabaseHelper {
                 val resultSet = statement.executeQuery(sql)
 
                 while (resultSet.next()) {
-                    val lastCheckinTime = resultSet.getString("last_checkin_time")
-                    val inactiveDays = calculateInactiveDays(lastCheckinTime)
-
-                    inactiveUsers.add(
-                        InactiveUser(
-                            userName = resultSet.getString("user_name"),
-                            phoneNumber = resultSet.getString("phone_number"),
-                            lastCheckinTime = lastCheckinTime,
-                            lastCheckinCity = resultSet.getString("last_city"),
-                            inactiveDays = inactiveDays
+                    val inactiveDays = resultSet.getInt("inactive_days")
+                    if (inactiveDays >= days) {
+                        inactiveUsers.add(
+                            InactiveUser(
+                                userName = resultSet.getString("user_name"),
+                                phoneNumber = resultSet.getString("phone_number"),
+                                lastCheckinTime = resultSet.getString("last_checkin_time"),
+                                lastCheckinCity = resultSet.getString("last_city"),
+                                inactiveDays = inactiveDays
+                            )
                         )
-                    )
+                    }
                 }
                 inactiveUsers
             } catch (e: Exception) {
@@ -295,23 +296,13 @@ class DatabaseHelper {
             }
         }
 
-        private fun calculateInactiveDays(lastCheckinTime: String): Int {
-            return try {
-                val format = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-                val lastTime = format.parse(lastCheckinTime)
-                val now = Date()
-                val diffInMillis = now.time - lastTime.time
-                (diffInMillis / (1000 * 60 * 60 * 24)).toInt()
-            } catch (e: Exception) {
-                0
-            }
-        }
 
         override fun onPostExecute(result: List<InactiveUser>) {
             callback(result)
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AdminScreen(
@@ -361,11 +352,7 @@ fun AdminScreen(
                                 horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
                                 StatItem("总打卡数", records.size)
-                                StatItemClickable(
-                                    title = "总人数",
-                                    value = records.distinctBy { it.userName }.size,
-                                    onClick = onNavigateToUserList
-                                )
+                                StatItem(title = "总人数", value = records.distinctBy { it.userName }.size)
                             }
 
                             HorizontalDivider(

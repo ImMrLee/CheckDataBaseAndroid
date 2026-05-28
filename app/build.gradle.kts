@@ -15,8 +15,8 @@ android {
         applicationId = "com.example.checkdatabase"
         minSdk = 23
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.0-release4"
+        versionCode = 6
+        versionName = "1.0.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

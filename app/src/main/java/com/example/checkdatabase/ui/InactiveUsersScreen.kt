@@ -217,7 +217,7 @@ fun InactiveUsersScreen(
                                     )
                                 ) {
                                     Text(
-                                        text = "注意：共有 ${filteredUsers.size} 人超过1天未打卡",
+                                        text = "注意：共有 ${filteredUsers.size} 人未完成打卡",
                                         modifier = Modifier.padding(16.dp),
                                         color = MaterialTheme.colorScheme.onErrorContainer,
                                         fontWeight = FontWeight.Bold
